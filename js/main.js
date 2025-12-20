@@ -1,4 +1,44 @@
-  // 管理者モード（true = 管理者）
+  const manufacturers = {
+    board: [
+      {
+        name: "BURTON",
+        country: "USA"
+      },
+      {
+        name: "SALOMON",
+        countrcy: "France"
+      },
+      {
+        name: "OGASAKA",
+        country: "Japan"
+      },
+      {
+        name: "YONEX",
+        country: "Japan"
+      }
+    ]
+  };
+
+  const manufacturerList = document.getElementById("manufacturer-list");
+
+  manufacturers.board.forEach((maker) => {
+    const section = document.createElement("div");
+    section.className = "accordion-item";
+
+    section.innerHTML = `
+      <div class="accordion-header">
+        ${maker.name}
+        ${maker.country === "Japan" ? "🇯🇵" : ""}
+      </div>
+      <div class="accordion-content">
+        <p>商品一覧は準備中</p>
+      </div>
+    `;
+
+    manufacturerList.appendChild(section);
+  });
+
+// 管理者モード（true = 管理者）
   const isAdmin = true;
   /* ===== アコーディオン ===== */
   document.querySelectorAll('.accordion-header').forEach(header => {
