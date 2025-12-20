@@ -2,19 +2,35 @@
     board: [
       {
         name: "BURTON",
-        country: "USA"
+        country: "USA",
+        products: [
+          { id: "custom", name: "Custom" },
+          { id: "process", name: "Process" }
+        ]
       },
       {
         name: "SALOMON",
-        countrcy: "France"
+        country: "France",
+        products: [
+          { id: "assassin", name: "Assassin" },
+          { id: "huck-knife", name: "Huck Knife" }
+        ]
       },
       {
         name: "OGASAKA",
-        country: "Japan"
+        country: "Japan",
+        products: [
+          { id: "ct", name: "CT" },
+          { id: "fc", name: "FC" }
+        ]
       },
       {
         name: "YONEX",
-        country: "Japan"
+        country: "Japan",
+        products: [
+          { id: "rev", name: "REV" },
+          { id: "smooth", name: "SMOOTH" }
+        ]
       }
     ]
   };
@@ -24,17 +40,23 @@
   manufacturers.board.forEach((maker) => {
     const section = document.createElement("div");
     section.className = "accordion-item";
-
+  
+    const productList = maker.products
+      .map(product => `<li>${product.name}</li>`)
+      .join("");
+  
     section.innerHTML = `
       <div class="accordion-header">
         ${maker.name}
         ${maker.country === "Japan" ? "🇯🇵" : ""}
       </div>
       <div class="accordion-content">
-        <p>商品一覧は準備中</p>
+        <ul class="product-list">
+          ${productList}
+        </ul>
       </div>
     `;
-
+  
     manufacturerList.appendChild(section);
   });
 
