@@ -42,8 +42,14 @@
     section.className = "accordion-item";
   
     const productList = maker.products
-      .map(product => `<li>${product.name}</li>`)
-      .join("");
+    .map(product => `
+      <li>
+        <a href="detail.html?product=${product.id}">
+          ${product.name}
+        </a>
+      </li>
+    `)
+    .join("");
   
     section.innerHTML = `
       <div class="accordion-header">
@@ -224,3 +230,28 @@ reviewList.addEventListener('click', (e) => {
   localStorage.setItem('reviews', JSON.stringify(reviews));
   renderReviews(reviews);
 });
+
+const params = new URLSearchParams(window.location.search);
+const productId = params.get("product");
+
+let currentProduct = null;
+
+manufacturers.board.forEach(maker => {
+  maker.products.forEach(product => {
+    if (product.id === productId) {
+      currentProduct = {
+        ...product,
+        maker: maker.name
+      };
+    }
+  });
+});
+
+const detailContainer = document.getElementById("product-detail");
+
+if (detailContainer && currentProduct) {
+  detailContainer.innerHTML = `
+    <h1>${currentProduct.name}</h1>
+    <p>メーカー：${currentProduct.maker}</p>
+  `;
+}
