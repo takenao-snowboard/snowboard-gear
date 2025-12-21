@@ -1,3 +1,124 @@
+// 管理者モード（true = 管理者）
+const isAdmin = true;
+
+// ===== URLから商品IDを取得 =====
+const params = new URLSearchParams(window.location.search);
+const productId = params.get("product");
+
+if (!productId) {
+  console.warn("商品IDが取得できません");
+}
+  
+  /* ===== レビュー一覧 ===== */
+  const savedReviews = localStorage.getItem('reviews');
+
+  const allReviews =
+    JSON.parse(localStorage.getItem("reviews")) || {};
+
+  const reviews =
+    allReviews[productId] || [];
+
+  const reviewList = document.getElementById('review-list');
+
+  function renderReviews(list) {
+    reviewList.innerHTML = '';
+
+    list.forEach((r, index) => {
+      const div = document.createElement('div');
+      div.className = 'review';
+
+      div.innerHTML = `
+        <div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+        <div class="review-meta">
+          ${r.nickname} / ${r.age} / ${r.style}
+        </div>
+        <p>${r.text}</p>
+        ${
+          isAdmin
+            ? `<button class="delete-btn" data-index="${index}">削除</button>`
+            : ''
+        }
+      `;
+
+      reviewList.appendChild(div);
+    });
+  }
+
+  renderReviews(reviews);
+
+  document.querySelectorAll('.sort-buttons button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.sort;
+      let sorted = [...reviews];
+
+      if (type === 'high') sorted.sort((a, b) => b.rating - a.rating);
+      if (type === 'low') sorted.sort((a, b) => a.rating - b.rating);
+      if (type === 'new') sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      renderReviews(sorted);
+    });
+  });
+
+  /* ===== レビュー投稿 ===== */
+  document.getElementById('submit-review').addEventListener('click', () => {
+    const nickname = document.getElementById('nickname').value || '匿名';
+    const age = document.getElementById('age').value || '未設定';
+    const style = document.getElementById('style').value || '未設定';
+    const rating = Number(starContainer.dataset.rating);
+    const text = textarea.value.trim();
+  
+    if (!rating) {
+      alert('評価（★）を選択してください');
+      return;
+    }
+  
+    if (!text) {
+      alert('レビュー内容を入力してください');
+      return;
+    }
+  
+    const newReview = {
+      nickname,
+      age,
+      style,
+      rating,
+      text,
+      date: new Date().toISOString().split('T')[0]
+    };
+  
+    if (!allReviews[productId]) {
+      allReviews[productId] = [];
+    }
+    
+    allReviews[productId].push(newReview);
+    localStorage.setItem("reviews", JSON.stringify(allReviews));
+    renderReviews(allReviews[productId]);
+
+    // フォームリセット
+    document.getElementById('nickname').value = '';
+    document.getElementById('age').value = '';
+    document.getElementById('style').value = '';
+    textarea.value = '';
+    starContainer.dataset.rating = 0;
+    highlightStars(0);
+    counter.textContent = '残り 300 文字';
+  });
+  
+  reviewList.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('delete-btn')) return;
+  
+    const index = Number(e.target.dataset.index);
+  
+    if (!confirm('このレビューを削除しますか？')) return;
+  
+    reviews.splice(index, 1);
+    allReviews[productId] = reviews;
+    localStorage.setItem("reviews", JSON.stringify(allReviews));
+    renderReviews(reviews);
+  });
+  
+
+
   const manufacturers = {
     board: [
       {
@@ -66,8 +187,7 @@
     manufacturerList.appendChild(section);
   });
 
-// 管理者モード（true = 管理者）
-  const isAdmin = true;
+
   /* ===== アコーディオン ===== */
   document.querySelectorAll('.accordion-header').forEach(header => {
     header.addEventListener('click', () => {
@@ -112,127 +232,6 @@
       highlightStars(star.dataset.value);
     });
   });
-
-  /* ===== レビュー一覧 ===== */
-  const savedReviews = localStorage.getItem('reviews');
-
-  const reviews = savedReviews
-    ? JSON.parse(savedReviews)
-    : [
-        {
-          nickname: "匿名",
-          rating: 4,
-          age: "30代",
-          style: "フリーラン",
-          text: "安定感があり高速域でも安心。",
-          date: "2025-01-10"
-        },
-        {
-          nickname: "匿名",
-          rating: 5,
-          age: "20代",
-          style: "パーク",
-          text: "反発が良くてジャンプがやりやすい。",
-          date: "2025-01-15"
-        }
-      ];
-
-  const reviewList = document.getElementById('review-list');
-
-  function renderReviews(list) {
-    reviewList.innerHTML = '';
-
-    list.forEach((r, index) => {
-      const div = document.createElement('div');
-      div.className = 'review';
-
-      div.innerHTML = `
-        <div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
-        <div class="review-meta">
-          ${r.nickname} / ${r.age} / ${r.style}
-        </div>
-        <p>${r.text}</p>
-        ${
-          isAdmin
-            ? `<button class="delete-btn" data-index="${index}">削除</button>`
-            : ''
-        }
-      `;
-
-      reviewList.appendChild(div);
-    });
-  }
-
-  renderReviews(reviews);
-
-  document.querySelectorAll('.sort-buttons button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const type = btn.dataset.sort;
-      let sorted = [...reviews];
-
-      if (type === 'high') sorted.sort((a, b) => b.rating - a.rating);
-      if (type === 'low') sorted.sort((a, b) => a.rating - b.rating);
-      if (type === 'new') sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      renderReviews(sorted);
-    });
-  });
-
-    /* ===== レビュー投稿 ===== */
-    document.getElementById('submit-review').addEventListener('click', () => {
-  const nickname = document.getElementById('nickname').value || '匿名';
-  const age = document.getElementById('age').value || '未設定';
-  const style = document.getElementById('style').value || '未設定';
-  const rating = Number(starContainer.dataset.rating);
-  const text = textarea.value.trim();
-
-  if (!rating) {
-    alert('評価（★）を選択してください');
-    return;
-  }
-
-  if (!text) {
-    alert('レビュー内容を入力してください');
-    return;
-  }
-
-  const newReview = {
-    nickname,
-    age,
-    style,
-    rating,
-    text,
-    date: new Date().toISOString().split('T')[0]
-  };
-
-  reviews.push(newReview);
-  localStorage.setItem('reviews', JSON.stringify(reviews));
-  renderReviews(reviews);
-
-  // フォームリセット
-  document.getElementById('nickname').value = '';
-  document.getElementById('age').value = '';
-  document.getElementById('style').value = '';
-  textarea.value = '';
-  starContainer.dataset.rating = 0;
-  highlightStars(0);
-  counter.textContent = '残り 300 文字';
-});
-
-reviewList.addEventListener('click', (e) => {
-  if (!e.target.classList.contains('delete-btn')) return;
-
-  const index = Number(e.target.dataset.index);
-
-  if (!confirm('このレビューを削除しますか？')) return;
-
-  reviews.splice(index, 1);
-  localStorage.setItem('reviews', JSON.stringify(reviews));
-  renderReviews(reviews);
-});
-
-const params = new URLSearchParams(window.location.search);
-const productId = params.get("product");
 
 let currentProduct = null;
 
