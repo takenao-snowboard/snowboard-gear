@@ -11,10 +11,48 @@
     <a href="index.html">← 一覧に戻る</a>
   </header>
 
-  <main id="product-detail">
-    <h1>商品名</h1>
-    <p>ここに商品情報が表示されます</p>
+  <main class="container" id="product-detail">
+    <!-- 商品情報がJSで入る -->
   </main>
+  
+  <section class="container" id="reviews">
+  
+    <h2>レビュー</h2>
+  
+    <!-- 並び替え -->
+    <div class="sort-buttons">
+      <button data-sort="new">新着順</button>
+      <button data-sort="high">評価が高い順</button>
+      <button data-sort="low">評価が低い順</button>
+    </div>
+  
+    <!-- レビュー一覧 -->
+    <div id="review-list"></div>
+  
+    <!-- レビュー投稿 -->
+  <div class="review-form">  
+    <h3>レビューを書く</h3>
+  
+    <input type="text" id="nickname" placeholder="ニックネーム">
+    <input type="text" id="age" placeholder="年代">
+    <input type="text" id="style" placeholder="スタイル">
+  
+    <!-- ★評価 -->
+    <div class="star-rating" data-rating="0">
+      <span data-value="1">★</span>
+      <span data-value="2">★</span>
+      <span data-value="3">★</span>
+      <span data-value="4">★</span>
+      <span data-value="5">★</span>
+    </div>
+  
+    <!-- レビュー本文 -->
+    <textarea maxlength="300" placeholder="レビューを入力（300文字以内）"></textarea>
+    <div class="char-count">残り 300 文字</div>
+  
+    <button id="submit-review">投稿する</button>
+  </div>
+  </section>
 
   <script src="js/main.js"></script>
 </body>
