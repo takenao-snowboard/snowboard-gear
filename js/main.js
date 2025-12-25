@@ -42,6 +42,86 @@ const manufacturers = {
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("product");
 const isDetailPage = !!productId;
+
+/* ===== レビュー保存・取得 ===== */
+function getReviews(productId) {
+  const data = localStorage.getItem(`reviews_${productId}`);
+  return data ? JSON.parse(data) : [];
+}
+
+function saveReviews(productId, reviews) {
+  localStorage.setItem(
+    `reviews_${productId}`,
+    JSON.stringify(reviews)
+  );
+}
+
+// レビュー表示
+function renderReviews(productId) {
+  const reviewList = document.getElementById("review-list");
+  if (!reviewList) return;
+
+  const reviews = getReviews(productId);
+  reviewList.innerHTML = "";
+
+  if (reviews.length === 0) {
+    reviewList.innerHTML = "<p>まだレビューはありません</p>";
+    return;
+  }
+
+  reviews.forEach(review => {
+    const div = document.createElement("div");
+    div.className = "review-item";
+    div.innerHTML = `
+      <div class="review-rating">${"★".repeat(review.rating)}</div>
+      <div class="review-name">${review.nickname}</div>
+      <p>${review.text}</p>
+    `;
+    reviewList.appendChild(div);
+  });
+}
+
+/* ===== レビュー投稿処理 ===== */
+function setupReviewForm(productId) {
+  const textarea = document.querySelector('textarea');
+  const counter = document.querySelector('.char-count');
+  const starContainer = document.querySelector('.star-rating');
+  const stars = document.querySelectorAll('.star-rating span');
+
+  function highlightStars(rating) {
+    stars.forEach(star => {
+      star.classList.toggle('active', star.dataset.value <= rating);
+    });
+  }
+
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      starContainer.dataset.rating = star.dataset.value;
+      highlightStars(star.dataset.value);
+    });
+  });
+
+  textarea.addEventListener('input', () => {
+    counter.textContent = `残り ${300 - textarea.value.length} 文字`;
+  });
+
+  document.getElementById('submit-review').addEventListener('click', () => {
+    const nickname = nicknameInput.value || '匿名';
+    const age = ageInput.value || '未設定';
+    const style = styleInput.value || '未設定';
+    const rating = Number(starContainer.dataset.rating);
+    const text = textarea.value.trim();
+
+    if (!rating || !text) return alert("入力不足です");
+
+    const reviews = getReviews(productId);
+    reviews.unshift({ nickname, age, style, rating, text });
+
+    saveReviews(productId, reviews);
+    renderReviews(productId);
+  });
+}
+
 if (isDetailPage && !productId) {
   alert("商品IDが取得できません");
 }
@@ -110,41 +190,6 @@ if (isDetailPage){
   });
 
 
-  //レビュー一覧
-  const savedReviews = localStorage.getItem('reviews');
-
-  //レビュー取得
-  const allReviews =
-    JSON.parse(localStorage.getItem("reviews")) || {};
-  const reviews =
-    allReviews[productId] || [];
-
-  //レビュー表示
-  const reviewList = document.getElementById('review-list');
-  function renderReviews(list) {
-    reviewList.innerHTML = '';
-
-    list.forEach((r, index) => {
-      const div = document.createElement('div');
-      div.className = 'review';
-
-      div.innerHTML = `
-        <div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
-        <div class="review-meta">
-          ${r.nickname} / ${r.age} / ${r.style}
-        </div>
-        <p>${r.text}</p>
-        ${
-          isAdmin
-            ? `<button class="delete-btn" data-index="${index}">削除</button>`
-            : ''
-        }
-      `;
-
-      reviewList.appendChild(div);
-    });
-  }
-
   // 並び替え
   document.querySelectorAll('.sort-buttons button').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -190,8 +235,6 @@ if (isDetailPage){
       allReviews[productId] = [];
     }
     
-    allReviews[productId].push(newReview);
-    localStorage.setItem("reviews", JSON.stringify(allReviews));
     renderReviews(allReviews[productId]);
 
     // フォームリセット
@@ -212,9 +255,6 @@ if (isDetailPage){
   
     if (!confirm('このレビューを削除しますか？')) return;
   
-    reviews.splice(index, 1);
-    allReviews[productId] = reviews;
-    localStorage.setItem("reviews", JSON.stringify(allReviews));
     renderReviews(reviews);
   });
 
@@ -265,3 +305,8 @@ if(manufacturerList){
       symbol.textContent = open ? '＋' : '−';
     });
   });
+
+  if (isDetailPage) {
+    renderReviews(productId);
+    setupReviewForm(productId);
+  }
