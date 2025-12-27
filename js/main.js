@@ -80,6 +80,7 @@ function renderReviews(productId) {
     `;
     reviewList.appendChild(div);
   });
+  
 
   //管理者用：削除イベント
   reviewList.querySelectorAll('.delete-review').forEach(button => {
@@ -93,6 +94,30 @@ function renderReviews(productId) {
   });
 }
 
+//レビュー並び替え
+function renderSortedReviews(reviews) {
+  const reviewList = document.getElementById("review-list");
+  if (!reviewList) return;
+
+  reviewList.innerHTML = "";
+
+  if (reviews.length === 0) {
+    reviewList.innerHTML = "<p>まだレビューはありません</p>";
+    return;
+  }
+
+  reviews.forEach((review, index) => {
+    const div = document.createElement("div");
+    div.className = "review-item";
+    div.innerHTML = `
+      <div class="review-rating">${"★".repeat(review.rating)}</div>
+      <div class="review-name">${review.nickname}</div>
+      <p>${review.text}</p>
+      ${isAdmin ? `<button class="delete-review" data-index="${index}">削除</button>` : ""}
+    `;
+    reviewList.appendChild(div);
+  });
+}
 
 /* ===== レビュー投稿処理 ===== */
 function setupReviewForm(productId) {
