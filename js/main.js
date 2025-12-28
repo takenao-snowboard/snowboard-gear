@@ -1,5 +1,9 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 // 管理者モード（true = 管理者）
 const isAdmin = true;
+
+let currentSort = "new"; // new / high / low
 
 const manufacturers = {
   board: [
@@ -80,19 +84,24 @@ function renderReviews(productId) {
     `;
     reviewList.appendChild(div);
   });
-  
+}
 
-  //管理者用：削除イベント
+//削除イベント関数
+function attachDeleteEvents(productId) {
+  const reviewList = document.getElementById("review-list");
+  if (!reviewList) return;
+
   reviewList.querySelectorAll('.delete-review').forEach(button => {
     button.addEventListener('click', () => {
       const index = button.dataset.index;
       const reviews = getReviews(productId);
       reviews.splice(index, 1);
       saveReviews(productId, reviews);
-      renderReviews(productId);
+      applySortAndRender();
     });
   });
 }
+
 
 //レビュー並び替え
 function renderSortedReviews(reviews) {
@@ -117,6 +126,22 @@ function renderSortedReviews(reviews) {
     `;
     reviewList.appendChild(div);
   });
+
+  attachDeleteEvents(productId);
+}
+
+function applySortAndRender() {
+  let reviews = getReviews(productId);
+
+  if (currentSort === "high") {
+    reviews = reviews.slice().sort((a, b) => b.rating - a.rating);
+  }
+
+  if (currentSort === "low") {
+    reviews = reviews.slice().sort((a, b) => a.rating - b.rating);
+  }
+
+  renderSortedReviews(reviews);
 }
 
 /* ===== レビュー投稿処理 ===== */
@@ -167,7 +192,7 @@ function setupReviewForm(productId) {
     reviews.unshift({ nickname, age, style, rating, text });
 
     saveReviews(productId, reviews);
-    renderReviews(productId);
+    applySortAndRender();
   });
 }
 
@@ -256,30 +281,28 @@ if(manufacturerList){
 
 /* ===== レビュー並び替え ===== */
 const sortButtons = document.querySelectorAll('.sort-buttons button');
-
+// 初期状態：新着順を選択中にする
+const defaultSortButton =
+  document.querySelector('.sort-buttons button[data-sort="new"]');
+if (defaultSortButton) {
+  defaultSortButton.classList.add('active');
+}
 sortButtons.forEach(button => {
   button.addEventListener('click', () => {
-    const sortType = button.dataset.sort;
-    let reviews = getReviews(productId);
+    currentSort = button.dataset.sort;
+    //★activeを全て外す
+    sortButtons.forEach(btn => btn.classList.remove("active"));
+    //★押したボタンをactiveに
+    button.classList.add("active");
+    
+    applySortAndRender();
 
-    if (sortType === 'new') {
-      // 新着順（保存順そのまま）
-      // 何もしない
-    }
-
-    if (sortType === 'high') {
-      reviews = reviews.slice().sort((a, b) => b.rating - a.rating);
-    }
-
-    if (sortType === 'low') {
-      reviews = reviews.slice().sort((a, b) => a.rating - b.rating);
-    }
-
-    renderSortedReviews(reviews);
   });
 });
 
   if (isDetailPage) {
-    renderReviews(productId);
+    applySortAndRender();
     setupReviewForm(productId);
   }
+
+});

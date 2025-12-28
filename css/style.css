@@ -182,3 +182,27 @@ button {
 .product-list li:hover {
   text-decoration: underline;
 }
+
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sort-buttons button {
+  background: #e0e0e0;
+  color: #333;
+  border: 1px solid #ccc;
+  transition: all 0.2s ease;
+}
+
+.sort-buttons button.active {
+  background: #0066cc;
+  color: #fff;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0,102,204,0.25);
+}
+
+.sort-buttons button:hover {
+  background: #ccc;
+}
