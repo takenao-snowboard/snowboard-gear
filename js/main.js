@@ -60,38 +60,14 @@ function saveReviews(productId, reviews) {
   );
 }
 
-// レビュー表示
-function renderReviews(productId) {
-  const reviewList = document.getElementById("review-list");
-  if (!reviewList) return;
 
-  const reviews = getReviews(productId);
-  reviewList.innerHTML = "";
-
-  if (reviews.length === 0) {
-    reviewList.innerHTML = "<p>まだレビューはありません</p>";
-    return;
-  }
-
-  reviews.forEach((review, index) => {
-    const div = document.createElement("div");
-    div.className = "review-item";
-    div.innerHTML = `
-      <div class="review-rating">${"★".repeat(review.rating)}</div>
-      <div class="review-name">${review.nickname}</div>
-      <p>${review.text}</p>
-      ${isAdmin ? `<button class="delete-review" data-index="${index}">削除</button>` : ""}
-    `;
-    reviewList.appendChild(div);
-  });
-}
 
 //削除イベント関数
 function attachDeleteEvents(productId) {
   const reviewList = document.getElementById("review-list");
   if (!reviewList) return;
 
-  reviewList.querySelectorAll('.delete-review').forEach(button => {
+  reviewList.querySelectorAll('.delete-btn').forEach(button => {
     button.addEventListener('click', () => {
       const index = button.dataset.index;
       const reviews = getReviews(productId);
@@ -122,7 +98,7 @@ function renderSortedReviews(reviews) {
       <div class="review-rating">${"★".repeat(review.rating)}</div>
       <div class="review-name">${review.nickname}</div>
       <p>${review.text}</p>
-      ${isAdmin ? `<button class="delete-review" data-index="${index}">削除</button>` : ""}
+      ${isAdmin ? `<button class="delete-btn" data-index="${index}">削除</button>` : ""}
     `;
     reviewList.appendChild(div);
   });
@@ -193,6 +169,15 @@ function setupReviewForm(productId) {
 
     saveReviews(productId, reviews);
     applySortAndRender();
+    //投稿後フォームリセット
+    document.getElementById('nickname').value = "";
+    document.getElementById('age').selectedIndex = 0;
+    document.getElementById('style').selectedIndex = 0;
+
+    textarea.value = "";
+    starContainer.dataset.rating = 0;
+    highlightStars(0);
+    counter.textContent = "残り 300 文字";
   });
 }
 

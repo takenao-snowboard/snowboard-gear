@@ -34,8 +34,24 @@
     <h3>レビューを書く</h3>
   
     <input type="text" id="nickname" placeholder="ニックネーム">
-    <input type="text" id="age" placeholder="年代">
-    <input type="text" id="style" placeholder="スタイル">
+    <!-- 年代 -->
+    <select id="age">
+      <option value="">年代を選択</option>
+      <option value="10代">10代</option>
+      <option value="20代">20代</option>
+      <option value="30代">30代</option>
+      <option value="40代以上">40代</option>
+      <option value="40代以上">50代以上</option>
+    </select>
+
+  <!-- スタイル -->
+  <select id="style">
+    <option value="">スタイルを選択</option>
+    <option value="グラトリ">グラトリ</option>
+    <option value="パーク">パーク</option>
+    <option value="フリーラン">フリーラン</option>
+    <option value="パウダー">パウダー</option>
+  </select>
   
     <!-- ★評価 -->
     <div class="star-rating" data-rating="0">
