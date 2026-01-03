@@ -86,9 +86,14 @@ select {
   margin-bottom: 4px;
 }
 .review-meta {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 6px;
+  font-size: 0.9em;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.review-age,
+.review-style {
+  margin-left: 4px;
 }
 .review-form textarea {
   width: 100%;

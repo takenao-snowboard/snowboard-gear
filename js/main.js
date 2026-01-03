@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
 const isAdmin = true;
 
 let currentSort = "new"; // new / high / low
+let currentAgeFilter = "";
+let currentStyleFilter = "";
 
 const manufacturers = {
   board: [
@@ -87,7 +89,7 @@ function renderSortedReviews(reviews) {
   reviewList.innerHTML = "";
 
   if (reviews.length === 0) {
-    reviewList.innerHTML = "<p>まだレビューはありません</p>";
+    reviewList.innerHTML = "<p>該当するレビューはありません</p>";
     return;
   }
 
@@ -95,9 +97,14 @@ function renderSortedReviews(reviews) {
     const div = document.createElement("div");
     div.className = "review-item";
     div.innerHTML = `
-      <div class="review-rating">${"★".repeat(review.rating)}</div>
-      <div class="review-name">${review.nickname}</div>
-      <p>${review.text}</p>
+      <div class="review-rating">${"⭐︎".repeat(review.rating)}</div>
+      <div class="review-meta">
+        <span class="review-name">${review.nickname}</span>
+        <span class="review-age">(${review.age})</span>
+        <span class="review-style">・${review.style}</span>
+      </div>
+
+  <p class="review-text">${review.text}</p>
       ${isAdmin ? `<button class="delete-btn" data-index="${index}">削除</button>` : ""}
     `;
     reviewList.appendChild(div);
@@ -109,6 +116,16 @@ function renderSortedReviews(reviews) {
 function applySortAndRender() {
   let reviews = getReviews(productId);
 
+  // ===== 絞り込み =====
+  if (currentAgeFilter) {
+    reviews = reviews.filter(r => r.age === currentAgeFilter);
+  }
+
+  if (currentStyleFilter) {
+    reviews = reviews.filter(r => r.style === currentStyleFilter);
+  }
+
+  // ===== 並び替え =====
   if (currentSort === "high") {
     reviews = reviews.slice().sort((a, b) => b.rating - a.rating);
   }
@@ -117,6 +134,20 @@ function applySortAndRender() {
     reviews = reviews.slice().sort((a, b) => a.rating - b.rating);
   }
 
+  const ageFilter = document.getElementById("filter-age");
+  const styleFilter = document.getElementById("filter-style");
+
+  if (ageFilter && styleFilter) {
+    ageFilter.addEventListener("change", () => {
+      currentAgeFilter = ageFilter.value;
+      applySortAndRender();
+    });
+
+    styleFilter.addEventListener("change", () => {
+      currentStyleFilter = styleFilter.value;
+      applySortAndRender();
+    });
+  }
   renderSortedReviews(reviews);
 }
 
