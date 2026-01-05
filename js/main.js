@@ -79,6 +79,11 @@ function calculateReviewSummary(reviews) {
   };
 }
 
+function getProductSummary(productId) {
+  const reviews = getReviews(productId);
+  return calculateReviewSummary(reviews);
+}
+
 
 //削除イベント関数
 function attachDeleteEvents(productId) {
@@ -309,15 +314,30 @@ if(manufacturerList){
   manufacturers.board.forEach((maker) => {
     const section = document.createElement("div");
     section.className = "accordion-item";
-  
+    //商品リンクHTML拡張
     const productList = maker.products
-    .map(product => `
-      <li>
-        <a href="detail.html?product=${product.id}">
-          ${product.name}
-        </a>
-      </li>
-    `)
+    .map(product => {
+      const summary = getProductSummary(product.id);
+
+      let ratingHtml = "未評価";
+      if (summary.count > 0) {
+        const fullStars = Math.floor(summary.average);
+        const emptyStars = 5 - fullStars;
+        ratingHtml =
+          "★".repeat(fullStars) +
+          "☆".repeat(emptyStars) +
+          ` ${summary.average} (${summary.count})`;
+      }
+
+      return `
+        <li class="product-item">
+          <a href="detail.html?product=${product.id}">
+            <span class="product-name">${product.name}</span>
+            <span class="product-rating">${ratingHtml}</span>
+          </a>
+        </li>
+      `;
+    })
     .join("");
   
     section.innerHTML = `

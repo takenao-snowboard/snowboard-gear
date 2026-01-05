@@ -241,3 +241,15 @@ button {
   color: #666;
   font-size: 14px;
 }
+
+.product-item a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-rating {
+  font-size: 0.85em;
+  color: #555;
+  white-space: nowrap;
+}
