@@ -211,3 +211,33 @@ button {
 .sort-buttons button:hover {
   background: #ccc;
 }
+
+#review-summary {
+  font-size: 1rem;
+  font-weight: bold;
+  margin: 8px 0 12px;
+  color: #333;
+}
+
+.review-summary {
+  margin: 12px 0 24px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-summary .stars {
+  color: #f5a623; /* ゴールド */
+  font-size: 20px;
+  letter-spacing: 2px;
+}
+
+.review-summary .rating-text {
+  font-weight: bold;
+}
+
+.review-summary .review-count {
+  color: #666;
+  font-size: 14px;
+}

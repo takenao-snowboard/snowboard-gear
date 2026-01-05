@@ -62,6 +62,22 @@ function saveReviews(productId, reviews) {
   );
 }
 
+function calculateReviewSummary(reviews) {
+  if (reviews.length === 0) {
+    return {
+      average: 0,
+      count: 0
+    };
+  }
+
+  const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const average = total / reviews.length;
+
+  return {
+    average: Math.round(average * 10) / 10, // 小数1桁
+    count: reviews.length
+  };
+}
 
 
 //削除イベント関数
@@ -78,6 +94,35 @@ function attachDeleteEvents(productId) {
       applySortAndRender();
     });
   });
+}
+
+//平均評価表示ロジック
+function renderReviewSummary(reviews) {
+  const summaryEl = document.getElementById("review-summary");
+  if (!summaryEl) return;
+
+  const starsEl = summaryEl.querySelector(".stars");
+  const ratingTextEl = summaryEl.querySelector(".rating-text");
+  const countEl = summaryEl.querySelector(".review-count");
+
+  if (reviews.length === 0) {
+    starsEl.textContent = "☆☆☆☆☆";
+    ratingTextEl.textContent = " 未評価";
+    countEl.textContent = "（レビューなし）";
+    return;
+  }
+
+  const avg =
+    reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  const rounded = Math.round(avg * 10) / 10;
+
+  const fullStars = Math.floor(avg);
+  const emptyStars = 5 - fullStars;
+
+  starsEl.textContent =
+    "★".repeat(fullStars) + "☆".repeat(emptyStars);
+  ratingTextEl.textContent = ` ${rounded} / 5`;
+  countEl.textContent = `（${reviews.length}件のレビュー）`;
 }
 
 
@@ -148,6 +193,7 @@ function applySortAndRender() {
       applySortAndRender();
     });
   }
+  renderReviewSummary(reviews);
   renderSortedReviews(reviews);
 }
 
@@ -242,6 +288,12 @@ if (isDetailPage){
     detailContainer.innerHTML = `
       <h1>${currentProduct.name}</h1>
       <p>メーカー：${currentProduct.maker}</p>
+
+      <div id="review-summary" class="review-summary">
+        <span class="stars"></span>
+        <span class="rating-text"></span>
+        <span class="review-count"></span>
+      </div> 
     `;
   }
 
