@@ -253,3 +253,42 @@ button {
   color: #555;
   white-space: nowrap;
 }
+
+.index-sort {
+  margin-bottom: 12px;
+}
+
+.index-sort button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
+
+.review-item {
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.review-item + .review-item {
+  margin-top: 16px;
+}
+
+.review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.review-date {
+  margin-left: auto;
+  color: #777;
+  font-size: 0.85em;
+}
+

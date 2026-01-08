@@ -1,11 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
 
 // 管理者モード（true = 管理者）
-const isAdmin = true;
+const isAdmin = false;
 
 let currentSort = "new"; // new / high / low
 let currentAgeFilter = "";
 let currentStyleFilter = "";
+
+let indexSortMode = "default"; // default | rating-desc
 
 const manufacturers = {
   board: [
@@ -48,6 +50,15 @@ const manufacturers = {
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("product");
 const isDetailPage = !!productId;
+
+const sortBtn = document.getElementById("sort-rating-desc");
+
+if (sortBtn) {
+  sortBtn.addEventListener("click", () => {
+    indexSortMode = "rating-desc";
+    renderManufacturerList(); // 一覧を再描画
+  });
+}
 
 /* ===== レビュー保存・取得 ===== */
 function getReviews(productId) {
@@ -144,17 +155,24 @@ function renderSortedReviews(reviews) {
   }
 
   reviews.forEach((review, index) => {
+    const dateText = review.createdAt
+      ? new Date(review.createdAt).toLocaleDateString("ja-JP")
+      : "";
+
     const div = document.createElement("div");
     div.className = "review-item";
     div.innerHTML = `
       <div class="review-rating">${"⭐︎".repeat(review.rating)}</div>
+
       <div class="review-meta">
-        <span class="review-name">${review.nickname}</span>
-        <span class="review-age">(${review.age})</span>
-        <span class="review-style">・${review.style}</span>
+        <span class="review-name">${review.nickname}　</span>
+        <span class="review-age"> /　(${review.age})　</span>
+        <span class="review-style"> /　${review.style}　</span>
+        ${dateText ? `<span class="review-date">${dateText}</span>` : ""}
       </div>
 
-  <p class="review-text">${review.text}</p>
+      <p class="review-text">${review.text}</p>
+
       ${isAdmin ? `<button class="delete-btn" data-index="${index}">削除</button>` : ""}
     `;
     reviewList.appendChild(div);
@@ -176,6 +194,18 @@ function applySortAndRender() {
   }
 
   // ===== 並び替え =====
+  if (currentSort === "new") {
+    reviews = reviews.slice().sort((a, b) =>
+      new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    );
+  }
+
+  if (currentSort === "old") {
+    reviews = reviews.slice().sort((a, b) =>
+      new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+    );
+  }
+
   if (currentSort === "high") {
     reviews = reviews.slice().sort((a, b) => b.rating - a.rating);
   }
@@ -247,7 +277,8 @@ function setupReviewForm(productId) {
     if (!rating || !text) return alert("入力不足です");
 
     const reviews = getReviews(productId);
-    reviews.unshift({ nickname, age, style, rating, text });
+    const createdAt = new Date().toISOString();
+    reviews.unshift({ nickname, age, style, rating, text, createdAt });
 
     saveReviews(productId, reviews);
     applySortAndRender();
@@ -309,52 +340,74 @@ if (isDetailPage){
 
 
 
-  const manufacturerList = document.getElementById("manufacturer-list");
-if(manufacturerList){
-  manufacturers.board.forEach((maker) => {
-    const section = document.createElement("div");
-    section.className = "accordion-item";
-    //商品リンクHTML拡張
-    const productList = maker.products
-    .map(product => {
-      const summary = getProductSummary(product.id);
-
-      let ratingHtml = "未評価";
-      if (summary.count > 0) {
-        const fullStars = Math.floor(summary.average);
-        const emptyStars = 5 - fullStars;
-        ratingHtml =
-          "★".repeat(fullStars) +
-          "☆".repeat(emptyStars) +
-          ` ${summary.average} (${summary.count})`;
+  function renderManufacturerList() {
+    const manufacturerList = document.getElementById("manufacturer-list");
+    if (!manufacturerList) return;
+  
+    manufacturerList.innerHTML = ""; // ★再描画のため必須
+  
+    manufacturers.board.forEach((maker) => {
+      const section = document.createElement("div");
+      section.className = "accordion-item";
+  
+      let products = [...maker.products];
+  
+      // ★ 並び替え（評価が高い順）
+      if (indexSortMode === "rating-desc") {
+        products.sort((a, b) => {
+          const aAvg = getProductSummary(a.id).average || 0;
+          const bAvg = getProductSummary(b.id).average || 0;
+          return bAvg - aAvg;
+        });
       }
-
-      return `
-        <li class="product-item">
-          <a href="detail.html?product=${product.id}">
-            <span class="product-name">${product.name}</span>
-            <span class="product-rating">${ratingHtml}</span>
-          </a>
-        </li>
+  
+      const productList = products.map(product => {
+        const summary = getProductSummary(product.id);
+  
+        let ratingHtml = "未評価";
+        if (summary.count > 0) {
+          const fullStars = Math.floor(summary.average);
+          const emptyStars = 5 - fullStars;
+          ratingHtml =
+            "★".repeat(fullStars) +
+            "☆".repeat(emptyStars) +
+            ` ${summary.average} (${summary.count})`;
+        }
+  
+        return `
+          <li class="product-item">
+            <a href="detail.html?product=${product.id}">
+              <span class="product-name">${product.name}</span>
+              <span class="product-rating">${ratingHtml}</span>
+            </a>
+          </li>
+        `;
+      }).join("");
+  
+      section.innerHTML = `
+        <div class="accordion-header">
+          ${maker.name}
+          ${maker.country === "Japan" ? "🇯🇵" : ""}
+        </div>
+        <div class="accordion-content">
+          <ul class="product-list">
+            ${productList}
+          </ul>
+        </div>
       `;
-    })
-    .join("");
   
-    section.innerHTML = `
-      <div class="accordion-header">
-        ${maker.name}
-        ${maker.country === "Japan" ? "🇯🇵" : ""}
-      </div>
-      <div class="accordion-content">
-        <ul class="product-list">
-          ${productList}
-        </ul>
-      </div>
-    `;
+      manufacturerList.appendChild(section);
+    });
   
-    manufacturerList.appendChild(section);
-  });
-}
+    // ★ アコーディオン再設定（再描画後は必須）
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        const open = content.style.display === 'block';
+        content.style.display = open ? 'none' : 'block';
+      });
+    });
+  }
 
   /* ===== アコーディオン ===== */
   document.querySelectorAll('.accordion-header').forEach(header => {
@@ -393,4 +446,5 @@ sortButtons.forEach(button => {
     setupReviewForm(productId);
   }
 
+renderManufacturerList();
 });
