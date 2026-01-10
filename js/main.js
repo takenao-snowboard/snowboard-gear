@@ -8,6 +8,7 @@ let currentAgeFilter = "";
 let currentStyleFilter = "";
 
 let indexSortMode = "default"; // default | rating-desc
+let currentSeason = "2025-2026"; // indexのシーズン選択
 
 const manufacturers = {
   board: [
@@ -59,6 +60,27 @@ if (sortBtn) {
     renderManufacturerList(); // 一覧を再描画
   });
 }
+
+
+const seasonSelect = document.getElementById("season-select");
+if (seasonSelect) {
+  // Homeで選んだシーズンがあれば優先
+  const savedSeason = localStorage.getItem("currentSeason");
+  if (savedSeason) {
+    currentSeason = savedSeason;
+    seasonSelect.value = savedSeason; // selectの表示も合わせる
+  } else {
+    // 保存がなければ、HTMLの初期値を使う
+    currentSeason = seasonSelect.value || currentSeason;
+  }
+
+  seasonSelect.addEventListener("change", () => {
+    currentSeason = seasonSelect.value;
+    localStorage.setItem("currentSeason", currentSeason); // ★ index側変更も保存
+    renderManufacturerList(); // シーズン変更で再描画
+  });
+}
+
 
 /* ===== レビュー保存・取得 ===== */
 function getReviews(productId) {
@@ -165,10 +187,10 @@ function renderSortedReviews(reviews) {
       <div class="review-rating">${"⭐︎".repeat(review.rating)}</div>
 
       <div class="review-meta">
-        <span class="review-name">${review.nickname}　</span>
-        <span class="review-age"> /　(${review.age})　</span>
-        <span class="review-style"> /　${review.style}　</span>
-        ${dateText ? `<span class="review-date">${dateText}</span>` : ""}
+        <span class="review-name">${review.nickname}</span>
+        <span class="review-age">(${review.age})</span>
+        <span class="review-style">・${review.style}</span>
+        ${dateText ? `<span class="review-date">・${dateText}</span>` : ""}
       </div>
 
       <p class="review-text">${review.text}</p>
@@ -194,18 +216,6 @@ function applySortAndRender() {
   }
 
   // ===== 並び替え =====
-  if (currentSort === "new") {
-    reviews = reviews.slice().sort((a, b) =>
-      new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
-    );
-  }
-
-  if (currentSort === "old") {
-    reviews = reviews.slice().sort((a, b) =>
-      new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
-    );
-  }
-
   if (currentSort === "high") {
     reviews = reviews.slice().sort((a, b) => b.rating - a.rating);
   }
@@ -346,11 +356,24 @@ if (isDetailPage){
   
     manufacturerList.innerHTML = ""; // ★再描画のため必須
   
+    const emptyEl = document.getElementById("season-empty");
+    let visibleProductCount = 0;
+
     manufacturers.board.forEach((maker) => {
       const section = document.createElement("div");
       section.className = "accordion-item";
   
       let products = [...maker.products];
+
+      // ★ シーズンで絞り込み（season未指定は2025-2026扱い）
+      products = products.filter(p => (p.season || "2025-2026") === currentSeason);
+
+      // ★ 0件ならメーカーごと表示しない
+      if (products.length === 0) return;
+
+      // ★ ここでカウント（returnの後ではなく、通過した時点で）
+      visibleProductCount += products.length;
+
   
       // ★ 並び替え（評価が高い順）
       if (indexSortMode === "rating-desc") {
@@ -399,6 +422,10 @@ if (isDetailPage){
       manufacturerList.appendChild(section);
     });
   
+    if (emptyEl) {
+      emptyEl.style.display = visibleProductCount === 0 ? "block" : "none";
+    }
+
     // ★ アコーディオン再設定（再描画後は必須）
     document.querySelectorAll('.accordion-header').forEach(header => {
       header.addEventListener('click', () => {

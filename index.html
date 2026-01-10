@@ -24,17 +24,25 @@
 
   <h1>Board（ボード一覧）</h1>
 
+  <div class="season-select">
+    <label for="season-select">シーズン：</label>
+    <select id="season-select">
+      <option value="2025-2026" selected>2025-2026</option>
+      <option value="2024-2025">2024-2025</option>
+    </select>
+  </div>
+  <p id="season-empty" class="season-empty" style="display:none;">
+    このシーズンの掲載商品はまだありません。
+  </p>
   <div class="index-sort">
     <button id="sort-rating-desc">評価が高い順</button>
   </div>
   <div class="accordion">
     <div id="manufacturer-list"></div>
-    </div>
   </div>
-
-
-
 </div>
+
+
 
   <!-- JavaScript -->
   <script src="js/main.js"></script>
