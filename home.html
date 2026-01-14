@@ -58,8 +58,15 @@
 
     <!-- 後から追加する枠（今は空でOK） -->
     <section class="home-panel">
-      <h2 class="section-title">人気・最新（後で追加）</h2>
-      <p class="help-text">ここに「評価が高いギア」「最新レビュー」などを追加できます。</p>
+      <h2 class="section-title">評価が高いギア Top5（Board）</h2>
+      <ul id="top-rated-list" class="home-list"></ul>
+      <p id="top-rated-empty" class="help-text" style="display:none;">まだレビューがありません。</p>
+    </section>
+    
+    <section class="home-panel">
+      <h2 class="section-title">最新レビュー Top5（Board）</h2>
+      <ul id="latest-review-list" class="home-list"></ul>
+      <p id="latest-review-empty" class="help-text" style="display:none;">まだレビューがありません。</p>
     </section>
   </main>
 
@@ -92,5 +99,144 @@
       });
     });
   </script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const select = document.getElementById("season-select");
+
+    // ★ Top5/最新レビューの再描画関数
+    function renderHomeLists(season) {
+      // ★ Home表示用の最小商品マスタ（今ある分だけ）
+      const products = [
+        { maker: "BURTON",  id: "custom",   name: "Custom" },
+        { maker: "BURTON",  id: "process",  name: "Process" },
+        { maker: "SALOMON", id: "assassin", name: "Assassin" },
+        { maker: "SALOMON", id: "huck-knife", name: "Huck Knife" },
+        { maker: "OGASAKA", id: "ct", name: "CT" },
+        { maker: "OGASAKA", id: "fc", name: "FC" },
+        { maker: "YONEX",   id: "rev", name: "REV" },
+        { maker: "YONEX",   id: "smooth", name: "SMOOTH" }
+      ];
+
+      function reviewKey(productId, season) {
+        return `reviews_${season}_${productId}`;
+      }
+
+      function getReviews(productId, season) {
+        const data = localStorage.getItem(reviewKey(productId, season));
+        return data ? JSON.parse(data) : [];
+      }
+
+      function calcSummary(reviews) {
+        if (!reviews.length) return { average: 0, count: 0 };
+        const avg = reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / reviews.length;
+        return { average: Math.round(avg * 10) / 10, count: reviews.length };
+      }
+
+      function stars(avg) {
+        const full = Math.floor(avg);
+        const empty = 5 - full;
+        return "★".repeat(full) + "☆".repeat(empty);
+      }
+
+      // ===== 評価Top5 =====
+      const rated = products.map(p => {
+        const reviews = getReviews(p.id, season);
+        const summary = calcSummary(reviews);
+        return { ...p, ...summary };
+      }).filter(p => p.count > 0)
+        .sort((a, b) => b.average - a.average || b.count - a.count)
+        .slice(0, 5);
+
+      const topList = document.getElementById("top-rated-list");
+      const topEmpty = document.getElementById("top-rated-empty");
+
+      if (topList) {
+        topList.innerHTML = "";
+        if (rated.length === 0) {
+          if (topEmpty) topEmpty.style.display = "block";
+        } else {
+          if (topEmpty) topEmpty.style.display = "none";
+          rated.forEach(p => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="detail.html?product=${p.id}&season=${season}">
+                <div class="home-item-title">${p.maker} ${p.name}</div>
+                <div class="home-item-meta">${stars(p.average)} ${p.average} / 5（${p.count}件）</div>
+              </a>
+            `;
+            topList.appendChild(li);
+          });
+        }
+      }
+
+      // ===== 最新レビューTop5 =====
+      const prefix = `reviews_${season}_`;
+      const all = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(prefix)) continue;
+
+        const productId = key.replace(prefix, "");
+        const product = products.find(p => p.id === productId);
+        if (!product) continue;
+
+        try {
+          const reviews = JSON.parse(localStorage.getItem(key) || "[]");
+          reviews.forEach(r => {
+            all.push({
+              maker: product.maker,
+              name: product.name,
+              id: product.id,
+              rating: Number(r.rating) || 0,
+              createdAt: r.createdAt || "",
+              dateText: r.createdAt ? new Date(r.createdAt).toLocaleDateString("ja-JP") : ""
+            });
+          });
+        } catch (e) {}
+      }
+
+      all.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      const latest = all.slice(0, 5);
+
+      const latestList = document.getElementById("latest-review-list");
+      const latestEmpty = document.getElementById("latest-review-empty");
+
+      if (latestList) {
+        latestList.innerHTML = "";
+        if (latest.length === 0) {
+          if (latestEmpty) latestEmpty.style.display = "block";
+        } else {
+          if (latestEmpty) latestEmpty.style.display = "none";
+          latest.forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="detail.html?product=${item.id}&season=${season}">
+                <div class="home-item-title">${item.maker} ${item.name}</div>
+                <div class="home-item-meta">★${item.rating} ${item.dateText}</div>
+              </a>
+            `;
+            latestList.appendChild(li);
+          });
+        }
+      }
+    }
+
+    // ★ 初回：select優先（なければlocalStorage）
+    const initialSeason =
+      (select && select.value) || localStorage.getItem("currentSeason") || "2025-2026";
+    renderHomeLists(initialSeason);
+
+    // ★ 変更時：保存＋再描画
+    if (select) {
+      select.addEventListener("change", () => {
+        localStorage.setItem("currentSeason", select.value);
+        renderHomeLists(select.value);
+      });
+    }
+  });
+</script>
+
 </body>
 </html>

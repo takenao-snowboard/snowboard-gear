@@ -17,7 +17,7 @@ const manufacturers = {
       country: "USA",
       products: [
         { id: "custom", name: "Custom" },
-        { id: "process", name: "Process" }
+        { id: "process", name: "Process", season: "2024-2025" }
       ]
     },
     {
@@ -25,7 +25,7 @@ const manufacturers = {
       country: "France",
       products: [
         { id: "assassin", name: "Assassin" },
-        { id: "huck-knife", name: "Huck Knife" }
+        { id: "huck-knife", name: "Huck Knife", season: "2024-2025" }
       ]
     },
     {
@@ -33,7 +33,7 @@ const manufacturers = {
       country: "Japan",
       products: [
         { id: "ct", name: "CT" },
-        { id: "fc", name: "FC" }
+        { id: "fc", name: "FC", season: "2024-2025" }
       ]
     },
     {
@@ -41,7 +41,7 @@ const manufacturers = {
       country: "Japan",
       products: [
         { id: "rev", name: "REV" },
-        { id: "smooth", name: "SMOOTH" }
+        { id: "smooth", name: "SMOOTH", season: "2024-2025" }
       ]
     }
   ]
@@ -50,6 +50,24 @@ const manufacturers = {
 // ===== URLから商品IDを取得 =====
 const params = new URLSearchParams(window.location.search);
 const productId = params.get("product");
+
+const isDetailHtml = location.pathname.endsWith("detail.html");
+
+if (isDetailHtml && !productId) {
+  const detailContainer = document.getElementById("product-detail");
+  if (detailContainer) {
+    detailContainer.innerHTML = `
+      <h1>商品が選択されていません</h1>
+      <p>Board一覧から商品を選んでください。</p>
+      <p><a href="index.html">← Board一覧へ</a></p>
+    `;
+  }
+  return; // ★ ここで以降の処理を止める
+}
+
+// ★ 追加：URL優先でseasonを決める（無ければlocalStorage）
+const seasonParam = params.get("season");
+const activeSeason = seasonParam || localStorage.getItem("currentSeason") || "2025-2026";
 const isDetailPage = !!productId;
 
 const sortBtn = document.getElementById("sort-rating-desc");
@@ -83,16 +101,17 @@ if (seasonSelect) {
 
 
 /* ===== レビュー保存・取得 ===== */
-function getReviews(productId) {
-  const data = localStorage.getItem(`reviews_${productId}`);
+function reviewKey(productId, season) {
+  return `reviews_${season}_${productId}`;
+}
+
+function getReviews(productId, season) {
+  const data = localStorage.getItem(reviewKey(productId, season));
   return data ? JSON.parse(data) : [];
 }
 
-function saveReviews(productId, reviews) {
-  localStorage.setItem(
-    `reviews_${productId}`,
-    JSON.stringify(reviews)
-  );
+function saveReviews(productId, season, reviews) {
+  localStorage.setItem(reviewKey(productId, season), JSON.stringify(reviews));
 }
 
 function calculateReviewSummary(reviews) {
@@ -112,23 +131,23 @@ function calculateReviewSummary(reviews) {
   };
 }
 
-function getProductSummary(productId) {
-  const reviews = getReviews(productId);
+function getProductSummary(productId, season) {
+  const reviews = getReviews(productId, season);
   return calculateReviewSummary(reviews);
 }
 
 
 //削除イベント関数
-function attachDeleteEvents(productId) {
+function attachDeleteEvents(productId, season) {
   const reviewList = document.getElementById("review-list");
   if (!reviewList) return;
 
   reviewList.querySelectorAll('.delete-btn').forEach(button => {
     button.addEventListener('click', () => {
       const index = button.dataset.index;
-      const reviews = getReviews(productId);
+      const reviews = getReviews(productId, season);
       reviews.splice(index, 1);
-      saveReviews(productId, reviews);
+      saveReviews(productId, season, reviews);
       applySortAndRender();
     });
   });
@@ -188,9 +207,9 @@ function renderSortedReviews(reviews) {
 
       <div class="review-meta">
         <span class="review-name">${review.nickname}</span>
-        <span class="review-age">(${review.age})</span>
+        <span class="review-age">・(${review.age})</span>
         <span class="review-style">・${review.style}</span>
-        ${dateText ? `<span class="review-date">・${dateText}</span>` : ""}
+        ${dateText ? `<span class="review-date">${dateText}</span>` : ""}
       </div>
 
       <p class="review-text">${review.text}</p>
@@ -200,11 +219,11 @@ function renderSortedReviews(reviews) {
     reviewList.appendChild(div);
   });
 
-  attachDeleteEvents(productId);
+  attachDeleteEvents(productId, activeSeason);
 }
 
 function applySortAndRender() {
-  let reviews = getReviews(productId);
+  let reviews = getReviews(productId, activeSeason);
 
   // ===== 絞り込み =====
   if (currentAgeFilter) {
@@ -224,26 +243,12 @@ function applySortAndRender() {
     reviews = reviews.slice().sort((a, b) => a.rating - b.rating);
   }
 
-  const ageFilter = document.getElementById("filter-age");
-  const styleFilter = document.getElementById("filter-style");
-
-  if (ageFilter && styleFilter) {
-    ageFilter.addEventListener("change", () => {
-      currentAgeFilter = ageFilter.value;
-      applySortAndRender();
-    });
-
-    styleFilter.addEventListener("change", () => {
-      currentStyleFilter = styleFilter.value;
-      applySortAndRender();
-    });
-  }
   renderReviewSummary(reviews);
   renderSortedReviews(reviews);
 }
 
 /* ===== レビュー投稿処理 ===== */
-function setupReviewForm(productId) {
+function setupReviewForm(productId, season) {
   const textarea = document.querySelector('textarea');
   const counter = document.querySelector('.char-count');
   const starContainer = document.querySelector('.star-rating');
@@ -286,11 +291,11 @@ function setupReviewForm(productId) {
 
     if (!rating || !text) return alert("入力不足です");
 
-    const reviews = getReviews(productId);
+    const reviews = getReviews(productId, season);
     const createdAt = new Date().toISOString();
     reviews.unshift({ nickname, age, style, rating, text, createdAt });
 
-    saveReviews(productId, reviews);
+    saveReviews(productId, season, reviews);
     applySortAndRender();
     //投稿後フォームリセット
     document.getElementById('nickname').value = "";
@@ -302,14 +307,6 @@ function setupReviewForm(productId) {
     highlightStars(0);
     counter.textContent = "残り 300 文字";
   });
-}
-
-if (isDetailPage && !productId) {
-  alert("商品IDが取得できません");
-}
-
-if (!productId) {
-  console.warn("商品IDが取得できません");
 }
 
 if (isDetailPage){
@@ -334,6 +331,9 @@ if (isDetailPage){
     detailContainer.innerHTML = `
       <h1>${currentProduct.name}</h1>
       <p>メーカー：${currentProduct.maker}</p>
+      <p id="season-label" class="season-label">
+        シーズン：${activeSeason}
+      </p>
 
       <div id="review-summary" class="review-summary">
         <span class="stars"></span>
@@ -343,7 +343,7 @@ if (isDetailPage){
     `;
   }
 
-  }
+}
 
 
 
@@ -378,14 +378,14 @@ if (isDetailPage){
       // ★ 並び替え（評価が高い順）
       if (indexSortMode === "rating-desc") {
         products.sort((a, b) => {
-          const aAvg = getProductSummary(a.id).average || 0;
-          const bAvg = getProductSummary(b.id).average || 0;
+          const aAvg = getProductSummary(a.id, currentSeason).average || 0;
+          const bAvg = getProductSummary(b.id, currentSeason).average || 0;
           return bAvg - aAvg;
         });
       }
   
       const productList = products.map(product => {
-        const summary = getProductSummary(product.id);
+        const summary = getProductSummary(product.id, currentSeason);
   
         let ratingHtml = "未評価";
         if (summary.count > 0) {
@@ -399,7 +399,7 @@ if (isDetailPage){
   
         return `
           <li class="product-item">
-            <a href="detail.html?product=${product.id}">
+            <a href="detail.html?product=${product.id}&season=${currentSeason}">
               <span class="product-name">${product.name}</span>
               <span class="product-rating">${ratingHtml}</span>
             </a>
@@ -447,6 +447,24 @@ if (isDetailPage){
     });
   });
 
+  // ===== フィルター（年代・スタイル）は1回だけイベント登録 =====
+const ageFilter = document.getElementById("filter-age");
+const styleFilter = document.getElementById("filter-style");
+
+if (ageFilter) {
+  ageFilter.addEventListener("change", () => {
+    currentAgeFilter = ageFilter.value;
+    applySortAndRender();
+  });
+}
+
+if (styleFilter) {
+  styleFilter.addEventListener("change", () => {
+    currentStyleFilter = styleFilter.value;
+    applySortAndRender();
+  });
+}
+
 /* ===== レビュー並び替え ===== */
 const sortButtons = document.querySelectorAll('.sort-buttons button');
 // 初期状態：新着順を選択中にする
@@ -470,7 +488,7 @@ sortButtons.forEach(button => {
 
   if (isDetailPage) {
     applySortAndRender();
-    setupReviewForm(productId);
+    setupReviewForm(productId, activeSeason);
   }
 
 renderManufacturerList();

@@ -8,11 +8,16 @@
 <body>
 
   <header>
-    <a href="index.html">← 一覧に戻る</a>
+    <div class="logo">Snowboard Gear</div>
+    <nav>
+      <a href="home.html">Home</a>
+      <a href="index.html">Board</a>
+    </nav>
   </header>
 
   <main class="container" id="product-detail">
     <!-- 商品情報がJSで入る -->
+    <p id="season-label" class="season-label"></p>
   </main>
   
   <section class="container" product="reviews">
@@ -34,7 +39,8 @@
         <option value="10代">10代</option>
         <option value="20代">20代</option>
         <option value="30代">30代</option>
-        <option value="40代以上">40代以上</option>
+        <option value="40代以上">40代</option>
+        <option value="50代以上">50代以上</option>
       </select>
 
       <select id="filter-style">
@@ -61,7 +67,7 @@
       <option value="20代">20代</option>
       <option value="30代">30代</option>
       <option value="40代以上">40代</option>
-      <option value="40代以上">50代以上</option>
+      <option value="50代以上">50代以上</option>
     </select>
 
   <!-- スタイル -->
