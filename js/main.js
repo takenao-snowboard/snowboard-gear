@@ -10,42 +10,7 @@ let currentStyleFilter = "";
 let indexSortMode = "default"; // default | rating-desc
 let currentSeason = "2025-2026"; // indexのシーズン選択
 
-const manufacturers = {
-  board: [
-    {
-      name: "BURTON",
-      country: "USA",
-      products: [
-        { id: "custom", name: "Custom" },
-        { id: "process", name: "Process", season: "2024-2025" }
-      ]
-    },
-    {
-      name: "SALOMON",
-      country: "France",
-      products: [
-        { id: "assassin", name: "Assassin" },
-        { id: "huck-knife", name: "Huck Knife", season: "2024-2025" }
-      ]
-    },
-    {
-      name: "OGASAKA",
-      country: "Japan",
-      products: [
-        { id: "ct", name: "CT" },
-        { id: "fc", name: "FC", season: "2024-2025" }
-      ]
-    },
-    {
-      name: "YONEX",
-      country: "Japan",
-      products: [
-        { id: "rev", name: "REV" },
-        { id: "smooth", name: "SMOOTH", season: "2024-2025" }
-      ]
-    }
-  ]
-};
+const manufacturers = window.MANUFACTURERS || [];
 
 // ===== URLから商品IDを取得 =====
 const params = new URLSearchParams(window.location.search);
@@ -59,7 +24,7 @@ if (isDetailHtml && !productId) {
     detailContainer.innerHTML = `
       <h1>商品が選択されていません</h1>
       <p>Board一覧から商品を選んでください。</p>
-      <p><a href="index.html">← Board一覧へ</a></p>
+      <p><a href="board.html">← Board一覧へ</a></p>
     `;
   }
   return; // ★ ここで以降の処理を止める
@@ -313,12 +278,12 @@ if (isDetailPage){
 
   //商品特定
   let currentProduct = null;
-  manufacturers.board.forEach(maker => {
-    maker.products.forEach(product => {
+  manufacturers.forEach((maker) => {
+    (maker.products || []).forEach(product => {
       if (product.id === productId) {
         currentProduct = {
           ...product,
-          maker: maker.name
+          maker: maker.maker
         };
       }
     });
@@ -341,6 +306,29 @@ if (isDetailPage){
         <span class="review-count"></span>
       </div> 
     `;
+    addToRecentlyViewed({
+      id: currentProduct.id,
+      name: currentProduct.name,
+      maker: currentProduct.maker,
+      season: activeSeason
+    });
+  }
+
+  function addToRecentlyViewed(item) {
+    const key = "recentlyViewed";
+    const max = 5;
+  
+    const list = JSON.parse(localStorage.getItem(key) || "[]");
+  
+    // 同じ( season + product )があれば先頭に入れ直す
+    const filtered = list.filter(x => !(x.id === item.id && x.season === item.season));
+  
+    filtered.unshift({
+      ...item,
+      viewedAt: new Date().toISOString()
+    });
+  
+    localStorage.setItem(key, JSON.stringify(filtered.slice(0, max)));
   }
 
 }
@@ -359,7 +347,7 @@ if (isDetailPage){
     const emptyEl = document.getElementById("season-empty");
     let visibleProductCount = 0;
 
-    manufacturers.board.forEach((maker) => {
+    manufacturers.forEach((maker) => {
       const section = document.createElement("div");
       section.className = "accordion-item";
   
@@ -409,10 +397,10 @@ if (isDetailPage){
   
       section.innerHTML = `
         <div class="accordion-header">
-          ${maker.name}
-          ${maker.country === "Japan" ? "🇯🇵" : ""}
+          <span class="accordion-icon">＋</span>
+          <span class="accordion-title">${maker.maker}</span>
         </div>
-        <div class="accordion-content">
+        <div class="accordion-content" style="display:none;">
           <ul class="product-list">
             ${productList}
           </ul>
@@ -430,22 +418,17 @@ if (isDetailPage){
     document.querySelectorAll('.accordion-header').forEach(header => {
       header.addEventListener('click', () => {
         const content = header.nextElementSibling;
+        const icon = header.querySelector('.accordion-icon');
+    
         const open = content.style.display === 'block';
         content.style.display = open ? 'none' : 'block';
+    
+        if (icon) icon.textContent = open ? '＋' : '−';
       });
     });
   }
 
-  /* ===== アコーディオン ===== */
-  document.querySelectorAll('.accordion-header').forEach(header => {
-    header.addEventListener('click', () => {
-      const content = header.nextElementSibling;
-      const symbol = header.querySelector('span');
-      const open = content.style.display === 'block';
-      content.style.display = open ? 'none' : 'block';
-      symbol.textContent = open ? '＋' : '−';
-    });
-  });
+
 
   // ===== フィルター（年代・スタイル）は1回だけイベント登録 =====
 const ageFilter = document.getElementById("filter-age");

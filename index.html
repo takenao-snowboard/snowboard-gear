@@ -1,51 +1,267 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Snowboard Gear Reviews</title>
-  
-  <!-- CSS -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snowboard Gear | Home</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="index.html">Snowboard Gear</a>
 
-<header>
-  <div class="logo">Snowboard Gear</div>
-  <nav>
-    <a href="home.html">Home</a>
-    <a href="index.html">Board</a>
-    <a href="#" aria-disabled="true">Bind</a>
-    <a href="#" aria-disabled="true">Boot</a>
-  </nav>
-</header>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="board.html">Board</a>
+        <a href="#" aria-disabled="true">Bind</a>
+        <a href="#" aria-disabled="true">Boot</a>
+      </nav>
+    </div>
+  </header>
 
-<div class="container">
+  <main class="container">
+    <section class="hero">
+      <h1>最高のギアを、迷わず見つけよう。</h1>
+      <p>シーズンとカテゴリから探せます。レビューで比較して納得の一本へ。</p>
+    </section>
 
-  <h1>Board（ボード一覧）</h1>
+    <!-- シーズン選択 -->
+    <section class="home-panel">
+      <div class="season-select">
+        <label for="season-select">シーズン：</label>
+        <select id="season-select">
+          <option value="2025-2026" selected>2025-2026</option>
+          <option value="2024-2025">2024-2025</option>
+        </select>
+      </div>
+      <p class="help-text">※ シーズンを選んでからカテゴリへ進んでください</p>
+    </section>
 
-  <div class="season-select">
-    <label for="season-select">シーズン：</label>
-    <select id="season-select">
-      <option value="2025-2026" selected>2025-2026</option>
-      <option value="2024-2025">2024-2025</option>
-    </select>
-  </div>
-  <p id="season-empty" class="season-empty" style="display:none;">
-    このシーズンの掲載商品はまだありません。
-  </p>
-  <div class="index-sort">
-    <button id="sort-rating-desc">評価が高い順</button>
-  </div>
-  <div class="accordion">
-    <div id="manufacturer-list"></div>
-  </div>
-</div>
+    <!-- カテゴリ導線 -->
+    <section class="category-cards">
+      <a class="category-card" href="board.html" data-category="board">
+        <h2>Board</h2>
+        <p>板を探す</p>
+      </a>
 
+      <a class="category-card disabled" href="#" aria-disabled="true">
+        <h2>Bind</h2>
+        <p>準備中</p>
+      </a>
 
+      <a class="category-card disabled" href="#" aria-disabled="true">
+        <h2>Boot</h2>
+        <p>準備中</p>
+      </a>
+    </section>
 
-  <!-- JavaScript -->
-  <script src="js/main.js"></script>
+    <!-- 後から追加する枠（今は空でOK） -->
+    <section class="home-panel">
+      <h2 class="section-title">評価が高いギア Top5（Board）</h2>
+      <ul id="top-rated-list" class="home-list"></ul>
+      <p id="top-rated-empty" class="help-text" style="display:none;">まだレビューがありません。</p>
+    </section>
+    
+    <section class="home-panel">
+      <h2 class="section-title">最新レビュー Top5（Board）</h2>
+      <ul id="latest-review-list" class="home-list"></ul>
+      <p id="latest-review-empty" class="help-text" style="display:none;">まだレビューがありません。</p>
+    </section>
+  
+    <section class="home-panel">
+      <h2 class="section-title">最近見た商品（最大5件）</h2>
+      <ul id="recent-list" class="home-list"></ul>
+      <p id="recent-empty" class="help-text" style="display:none;">まだ閲覧履歴がありません。</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>© Snowboard Gear</small>
+    </div>
+  </footer>
+
+  <!-- シーズン選択を保存して、一覧ページへ引き継ぐ（表示だけでも後々役に立つ） -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const select = document.getElementById("season-select");
+      if (!select) return;
+
+      // 既に保存があれば復元
+      const saved = localStorage.getItem("currentSeason");
+      if (saved) select.value = saved;
+
+      // 変更を保存
+      select.addEventListener("change", () => {
+        localStorage.setItem("currentSeason", select.value);
+      });
+
+      // カテゴリカード押下時も保存（念のため）
+      document.querySelectorAll(".category-card").forEach(card => {
+        card.addEventListener("click", () => {
+          localStorage.setItem("currentSeason", select.value);
+        });
+      });
+    });
+  </script>
+
+<script src="js/products.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const select = document.getElementById("season-select");
+
+    // ★ Top5/最新レビューの再描画関数
+    function renderHomeLists(season) {
+      // ★ Home表示用の最小商品マスタ（今ある分だけ）
+      const products = window.getAllProducts ? window.getAllProducts() : [];
+
+      function reviewKey(productId, season) {
+        return `reviews_${season}_${productId}`;
+      }
+
+      function getReviews(productId, season) {
+        const data = localStorage.getItem(reviewKey(productId, season));
+        return data ? JSON.parse(data) : [];
+      }
+
+      function calcSummary(reviews) {
+        if (!reviews.length) return { average: 0, count: 0 };
+        const avg = reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / reviews.length;
+        return { average: Math.round(avg * 10) / 10, count: reviews.length };
+      }
+
+      function stars(avg) {
+        const full = Math.floor(avg);
+        const empty = 5 - full;
+        return "★".repeat(full) + "☆".repeat(empty);
+      }
+
+      // ===== 評価Top5 =====
+      const rated = products.map(p => {
+        const reviews = getReviews(p.id, season);
+        const summary = calcSummary(reviews);
+        return { ...p, ...summary };
+      }).filter(p => p.count > 0)
+        .sort((a, b) => b.average - a.average || b.count - a.count)
+        .slice(0, 5);
+
+      const topList = document.getElementById("top-rated-list");
+      const topEmpty = document.getElementById("top-rated-empty");
+
+      if (topList) {
+        topList.innerHTML = "";
+        if (rated.length === 0) {
+          if (topEmpty) topEmpty.style.display = "block";
+        } else {
+          if (topEmpty) topEmpty.style.display = "none";
+          rated.forEach(p => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="detail.html?product=${p.id}&season=${season}">
+                <div class="home-item-title">${p.maker} ${p.name}</div>
+                <div class="home-item-meta">${stars(p.average)} ${p.average} / 5（${p.count}件）</div>
+              </a>
+            `;
+            topList.appendChild(li);
+          });
+        }
+      }
+
+      // ===== 最新レビューTop5 =====
+      const prefix = `reviews_${season}_`;
+      const all = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(prefix)) continue;
+
+        const productId = key.replace(prefix, "");
+        const product = products.find(p => p.id === productId);
+        if (!product) continue;
+
+        try {
+          const reviews = JSON.parse(localStorage.getItem(key) || "[]");
+          reviews.forEach(r => {
+            all.push({
+              maker: product.maker,
+              name: product.name,
+              id: product.id,
+              rating: Number(r.rating) || 0,
+              createdAt: r.createdAt || "",
+              dateText: r.createdAt ? new Date(r.createdAt).toLocaleDateString("ja-JP") : ""
+            });
+          });
+        } catch (e) {}
+      }
+
+      all.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      const latest = all.slice(0, 5);
+
+      const latestList = document.getElementById("latest-review-list");
+      const latestEmpty = document.getElementById("latest-review-empty");
+
+      if (latestList) {
+        latestList.innerHTML = "";
+        if (latest.length === 0) {
+          if (latestEmpty) latestEmpty.style.display = "block";
+        } else {
+          if (latestEmpty) latestEmpty.style.display = "none";
+          latest.forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="detail.html?product=${item.id}&season=${season}">
+                <div class="home-item-title">${item.maker} ${item.name}</div>
+                <div class="home-item-meta">★${item.rating} ${item.dateText}</div>
+              </a>
+            `;
+            latestList.appendChild(li);
+          });
+        }
+      }
+
+      // ===== 最近見た商品 =====
+      const recentList = document.getElementById("recent-list");
+      const recentEmpty = document.getElementById("recent-empty");
+
+      if (recentList) {
+        const recent = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
+
+        recentList.innerHTML = "";
+        if (recent.length === 0) {
+          if (recentEmpty) recentEmpty.style.display = "block";
+        } else {
+          if (recentEmpty) recentEmpty.style.display = "none";
+
+          recent.forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="detail.html?product=${item.id}&season=${item.season}">
+                <div class="home-item-title">${item.maker} ${item.name}</div>
+                <div class="home-item-meta">シーズン：${item.season}</div>
+              </a>
+            `;
+            recentList.appendChild(li);
+          });
+        }
+      }
+    }
+
+    // ★ 初回：select優先（なければlocalStorage）
+    const initialSeason =
+      (select && select.value) || localStorage.getItem("currentSeason") || "2025-2026";
+    renderHomeLists(initialSeason);
+
+    // ★ 変更時：保存＋再描画
+    if (select) {
+      select.addEventListener("change", () => {
+        localStorage.setItem("currentSeason", select.value);
+        renderHomeLists(select.value);
+      });
+    }
+  });
+</script>
 
 </body>
 </html>

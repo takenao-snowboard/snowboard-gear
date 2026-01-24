@@ -44,7 +44,8 @@ select {
   padding: 14px 16px;
   cursor: pointer;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;          /* ← 空白1〜2文字分 */
   font-weight: 600;
 }
 .accordion-content {
@@ -428,4 +429,15 @@ button {
 .home-item-meta {
   color: #666;
   font-size: 13px;
+}
+
+.accordion-icon{
+  font-weight: bold;
+  font-size: 18px;
+  width: 16px;        /* 幅を固定して揺れ防止 */
+  text-align: center;
+}
+
+.accordion-header:hover {
+  background: #f1f1f1;
 }
