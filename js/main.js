@@ -10,6 +10,36 @@ let currentStyleFilter = "";
 let indexSortMode = "default"; // default | rating-desc
 let currentSeason = "2025-2026"; // indexのシーズン選択
 
+let currentSearch = "";
+function normalizeText(s) {
+  return (s || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    // 全角英数→半角（ざっくり）
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    // ひらがな→カタカナ（検索ゆれ減らす）
+    .replace(/[ぁ-ん]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
+}
+const searchInput = document.getElementById("gear-search");
+const clearBtn = document.getElementById("clear-search");
+
+if (searchInput) {
+  searchInput.addEventListener("input", () => {
+    currentSearch = searchInput.value;
+    renderManufacturerList();
+  });
+}
+
+if (clearBtn) {
+  clearBtn.addEventListener("click", () => {
+    currentSearch = "";
+    if (searchInput) searchInput.value = "";
+    renderManufacturerList();
+  });
+}
+
+
 const manufacturers = window.MANUFACTURERS || [];
 
 // ===== URLから商品IDを取得 =====
@@ -339,6 +369,7 @@ if (isDetailPage){
 
 
   function renderManufacturerList() {
+    const q = normalizeText(currentSearch);
     const manufacturerList = document.getElementById("manufacturer-list");
     if (!manufacturerList) return;
   
@@ -350,20 +381,41 @@ if (isDetailPage){
     manufacturers.forEach((maker) => {
       const section = document.createElement("div");
       section.className = "accordion-item";
-  
-      let products = [...maker.products];
-
+    
+      const makerName = normalizeText(maker.maker);
+      const makerKana = normalizeText(maker.kana); // 無ければ "" になる想定
+    
       // ★ シーズンで絞り込み（season未指定は2025-2026扱い）
-      products = products.filter(p => (p.season || "2025-2026") === currentSeason);
-
-      // ★ 0件ならメーカーごと表示しない
-      if (products.length === 0) return;
-
-      // ★ ここでカウント（returnの後ではなく、通過した時点で）
-      visibleProductCount += products.length;
-
-  
+      const seasonProducts = (maker.products || []).filter(
+        p => (p.season || "2025-2026") === currentSeason
+      );
+    
+      // ★ 検索で絞り込み（商品名/カナ/id + メーカー名/カナ）
+      const matchedProducts = seasonProducts.filter(p => {
+        const pn = normalizeText(p.name);
+        const pk = normalizeText(p.kana);
+        const pid = normalizeText(p.id);
+    
+        return !q
+          || pn.includes(q)
+          || pk.includes(q)
+          || pid.includes(q)
+          || makerName.includes(q)
+          || makerKana.includes(q);
+      });
+    
+      // ★ メーカー名だけヒットした場合：そのメーカーのシーズン商品を全部見せる
+      const makerMatched = q && (makerName.includes(q) || makerKana.includes(q));
+      const finalProducts = makerMatched ? seasonProducts : matchedProducts;
+    
+      // 0件ならメーカーごと表示しない
+      if (finalProducts.length === 0 && q) return;
+    
+      // 表示件数カウント
+      visibleProductCount += finalProducts.length;
+    
       // ★ 並び替え（評価が高い順）
+      let products = [...finalProducts];
       if (indexSortMode === "rating-desc") {
         products.sort((a, b) => {
           const aAvg = getProductSummary(a.id, currentSeason).average || 0;
@@ -371,10 +423,10 @@ if (isDetailPage){
           return bAvg - aAvg;
         });
       }
-  
+    
       const productList = products.map(product => {
         const summary = getProductSummary(product.id, currentSeason);
-  
+    
         let ratingHtml = "未評価";
         if (summary.count > 0) {
           const fullStars = Math.floor(summary.average);
@@ -384,7 +436,7 @@ if (isDetailPage){
             "☆".repeat(emptyStars) +
             ` ${summary.average} (${summary.count})`;
         }
-  
+    
         return `
           <li class="product-item">
             <a href="detail.html?product=${product.id}&season=${currentSeason}">
@@ -394,7 +446,7 @@ if (isDetailPage){
           </li>
         `;
       }).join("");
-  
+    
       section.innerHTML = `
         <div class="accordion-header">
           <span class="accordion-icon">＋</span>
@@ -406,7 +458,7 @@ if (isDetailPage){
           </ul>
         </div>
       `;
-  
+    
       manufacturerList.appendChild(section);
     });
   
