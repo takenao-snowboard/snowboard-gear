@@ -14,8 +14,8 @@
       <nav class="nav">
         <a href="index.html">Home</a>
         <a href="board.html">Board</a>
-        <a href="#" aria-disabled="true">Bind</a>
-        <a href="#" aria-disabled="true">Boot</a>
+        <a href="bind.html">Bind</a>
+        <a href="boot.html">Boot</a>
       </nav>
     </div>
   </header>
@@ -45,14 +45,14 @@
         <p>板を探す</p>
       </a>
 
-      <a class="category-card disabled" href="#" aria-disabled="true">
+      <a class="category-card" href="bind.html" data-category="bind">
         <h2>Bind</h2>
-        <p>準備中</p>
+        <p>バインディングを探す</p>
       </a>
 
-      <a class="category-card disabled" href="#" aria-disabled="true">
+      <a class="category-card" href="boot.html" data-category="boot">
         <h2>Boot</h2>
-        <p>準備中</p>
+        <p>ブーツを探す</p>
       </a>
     </section>
 
@@ -115,15 +115,22 @@
     // ★ Top5/最新レビューの再描画関数
     function renderHomeLists(season) {
       // ★ Home表示用の最小商品マスタ（今ある分だけ）
-      const products = window.getAllProducts ? window.getAllProducts() : [];
+      const products = window.getAllProducts ? window.getAllProducts("board") : [];
 
       function reviewKey(productId, season) {
+        return `reviews_${season}_board_${productId}`;
+      }
+
+      function legacyReviewKey(productId, season) {
         return `reviews_${season}_${productId}`;
       }
 
       function getReviews(productId, season) {
-        const data = localStorage.getItem(reviewKey(productId, season));
-        return data ? JSON.parse(data) : [];
+        const current = localStorage.getItem(reviewKey(productId, season));
+        if (current) return JSON.parse(current);
+
+        const legacy = localStorage.getItem(legacyReviewKey(productId, season));
+        return legacy ? JSON.parse(legacy) : [];
       }
 
       function calcSummary(reviews) {
@@ -159,7 +166,7 @@
           rated.forEach(p => {
             const li = document.createElement("li");
             li.innerHTML = `
-              <a href="detail.html?product=${p.id}&season=${season}">
+              <a href="detail.html?category=board&product=${p.id}&season=${season}">
                 <div class="home-item-title">${p.maker} ${p.name}</div>
                 <div class="home-item-meta">${stars(p.average)} ${p.average} / 5（${p.count}件）</div>
               </a>
@@ -170,31 +177,21 @@
       }
 
       // ===== 最新レビューTop5 =====
-      const prefix = `reviews_${season}_`;
       const all = [];
 
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key || !key.startsWith(prefix)) continue;
-
-        const productId = key.replace(prefix, "");
-        const product = products.find(p => p.id === productId);
-        if (!product) continue;
-
-        try {
-          const reviews = JSON.parse(localStorage.getItem(key) || "[]");
-          reviews.forEach(r => {
-            all.push({
-              maker: product.maker,
-              name: product.name,
-              id: product.id,
-              rating: Number(r.rating) || 0,
-              createdAt: r.createdAt || "",
-              dateText: r.createdAt ? new Date(r.createdAt).toLocaleDateString("ja-JP") : ""
-            });
+      products.forEach(product => {
+        const reviews = getReviews(product.id, season);
+        reviews.forEach(r => {
+          all.push({
+            maker: product.maker,
+            name: product.name,
+            id: product.id,
+            rating: Number(r.rating) || 0,
+            createdAt: r.createdAt || "",
+            dateText: r.createdAt ? new Date(r.createdAt).toLocaleDateString("ja-JP") : ""
           });
-        } catch (e) {}
-      }
+        });
+      });
 
       all.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       const latest = all.slice(0, 5);
@@ -211,7 +208,7 @@
           latest.forEach(item => {
             const li = document.createElement("li");
             li.innerHTML = `
-              <a href="detail.html?product=${item.id}&season=${season}">
+              <a href="detail.html?category=board&product=${item.id}&season=${season}">
                 <div class="home-item-title">${item.maker} ${item.name}</div>
                 <div class="home-item-meta">★${item.rating} ${item.dateText}</div>
               </a>
@@ -237,8 +234,9 @@
           recent.forEach(item => {
             const li = document.createElement("li");
             li.innerHTML = `
-              <a href="detail.html?product=${item.id}&season=${item.season}">
+              <a href="detail.html?category=${item.category || "board"}&product=${item.id}&season=${item.season}">
                 <div class="home-item-title">${item.maker} ${item.name}</div>
+                <div class="home-item-meta">カテゴリ：${(item.category || "board").toUpperCase()}</div>
                 <div class="home-item-meta">シーズン：${item.season}</div>
               </a>
             `;

@@ -299,6 +299,12 @@ button {
   font-size: 14px;
 }
 
+.empty-product-note {
+  margin: 10px 0 4px;
+  color: #666;
+  font-size: 14px;
+}
+
 /* ===== Home ===== */
 .site-header {
   border-bottom: 1px solid #e5e5e5;
@@ -399,6 +405,41 @@ button {
   color: #555;
   background: #f0f0f0;
   border-radius: 12px;
+}
+
+.product-specs {
+  margin: 8px 0 16px;
+  padding: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.product-specs h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.product-specs p {
+  margin: 4px 0;
+}
+
+.product-description {
+  margin: 8px 0 16px;
+  padding: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-description h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.product-description p {
+  margin: 0;
+  line-height: 1.7;
 }
 
 .home-list {

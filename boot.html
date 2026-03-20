@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Snowboard Gear Reviews</title>
-  
-  <!-- CSS -->
+  <title>Snowboard Gear | Boot</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -21,8 +19,7 @@
 </header>
 
 <div class="container">
-
-  <h1>Board（ボード一覧）</h1>
+  <h1>Boot（ブーツ一覧）</h1>
 
   <div class="season-select">
     <label for="season-select">シーズン：</label>
@@ -31,26 +28,27 @@
       <option value="2024-2025">2024-2025</option>
     </select>
   </div>
+
   <p id="season-empty" class="season-empty" style="display:none;">
     このシーズンの掲載商品はまだありません。
   </p>
+
   <div class="index-search">
-    <input id="gear-search" type="search" placeholder="メーカー名・商品名で検索（例：BURTON / バートン）" />
+    <input id="gear-search" type="search" placeholder="メーカー名・商品名で検索（例：DEELUXE / ディーラックス）" />
     <button id="clear-search" type="button">クリア</button>
   </div>
+
   <div class="index-sort">
     <button id="sort-rating-desc">評価が高い順</button>
   </div>
+
   <div class="accordion">
     <div id="manufacturer-list"></div>
   </div>
 </div>
 
-
-
-  <!-- JavaScript -->
-  <script src="js/products.js"></script>
-  <script src="js/main.js"></script>
+<script src="js/products.js"></script>
+<script src="js/main.js"></script>
 
 </body>
 </html>
